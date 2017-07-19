@@ -17,7 +17,7 @@ import {
   CommentInput,
 } from 'components';
 import { colors } from 'config';
-import { getRepository } from 'repository';
+import { getRepository, getContributors } from 'repository';
 import {
   getIssueComments,
   postIssueComment,
@@ -28,10 +28,12 @@ import {
 const mapStateToProps = state => ({
   authUser: state.auth.user,
   repository: state.repository.repository,
+  contributors: state.repository.contributors,
   issue: state.issue.issue,
   diff: state.issue.diff,
   isMerged: state.issue.isMerged,
   comments: state.issue.comments,
+  isPendingContributors: state.repository.isPendingContributors,
   isPendingDiff: state.issue.isPendingDiff,
   isPendingCheckMerge: state.issue.isPendingCheckMerge,
   isPendingComments: state.issue.isPendingComments,
@@ -46,6 +48,7 @@ const mapDispatchToProps = dispatch => ({
   getPullRequestDetailsByDispatch: url => dispatch(getPullRequestDetails(url)),
   getIssueFromUrlByDispatch: url => dispatch(getIssueFromUrl(url)),
   getRepositoryByDispatch: url => dispatch(getRepository(url)),
+  getContributorsByDispatch: url => dispatch(getContributors(url)),
 });
 
 class Issue extends Component {
@@ -77,6 +80,7 @@ class Issue extends Component {
     getIssueCommentsByDispatch: Function,
     getPullRequestDetailsByDispatch: Function,
     getRepositoryByDispatch: Function,
+    getContributorsByDispatch: Function,
     postIssueCommentByDispatch: Function,
     getIssueFromUrlByDispatch: Function,
     issue: Object,
@@ -84,7 +88,9 @@ class Issue extends Component {
     isMerged: boolean,
     // authUser: Object,
     repository: Object,
+    contributors: Array,
     comments: Array,
+    isPendingContributors: boolean,
     isPendingDiff: boolean,
     isPendingCheckMerge: boolean,
     isPendingComments: boolean,
@@ -99,6 +105,7 @@ class Issue extends Component {
       repository,
       getIssueCommentsByDispatch,
       getRepositoryByDispatch,
+      getContributorsByDispatch,
       getPullRequestDetailsByDispatch,
     } = this.props;
     const issue = navigation.state.params.issue;
@@ -109,7 +116,12 @@ class Issue extends Component {
       repository.full_name !==
       issue.repository_url.replace('https://api.github.com/repos/', '')
     ) {
-      getRepositoryByDispatch(issue.repository_url).then(() => {
+      Promise.all([
+        getRepositoryByDispatch(issue.repository_url),
+        getContributorsByDispatch(
+          this.getContributorsLink(issue.repository_url)
+        ),
+      ]).then(() => {
         this.setNavigationParams();
 
         if (issue.pull_request) {
@@ -124,6 +136,8 @@ class Issue extends Component {
       }
     }
   }
+
+  getContributorsLink = repository => `${repository}/contributors`;
 
   onLinkPress = node => {
     const { getIssueFromUrlByDispatch, navigation } = this.props;
@@ -214,20 +228,39 @@ class Issue extends Component {
     />;
 
   render() {
-    const { issue, comments, isPendingComments, navigation } = this.props;
+    const {
+      issue,
+      comments,
+      contributors,
+      isPendingComments,
+      isPendingContributors,
+      navigation,
+    } = this.props;
+
+    const fullComments = [issue, ...comments];
+    const participantNames = fullComments.map(item => item.user.login);
+    const contributorNames = !isPendingContributors
+      ? contributors.map(item => item.login)
+      : [];
+    const fullUsers = [...new Set([...participantNames, ...contributorNames])];
+
+    console.log('in issue screen');
 
     return (
       <ViewContainer>
+        {console.log('1')}
         {isPendingComments &&
           <LoadingContainer animating={isPendingComments} center />}
 
+        {console.log('2')}
         {!isPendingComments &&
-          issue &&
+          !!issue &&
           <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={'padding'}
             keyboardVerticalOffset={Platform.select({ ios: 65, android: -200 })}
           >
+            {console.log('3')}
             <FlatList
               ref={ref => {
                 this.commentsList = ref;
@@ -235,12 +268,13 @@ class Issue extends Component {
               contentContainerStyle={{ flexGrow: 1 }}
               ListHeaderComponent={this.renderHeader}
               removeClippedSubviews={false}
-              data={[issue, ...comments]}
+              data={fullComments}
               keyExtractor={this.keyExtractor}
               renderItem={this.renderItem}
             />
-
+            {console.log('4')}
             <CommentInput
+              users={fullUsers}
               userHasPushPermission={
                 navigation.state.params.userHasPushPermission
               }
@@ -248,6 +282,7 @@ class Issue extends Component {
               onSubmitEditing={this.postComment}
             />
           </KeyboardAvoidingView>}
+        {console.log('5')}
       </ViewContainer>
     );
   }

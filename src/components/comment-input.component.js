@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 
+import { MentionArea } from 'components';
 import { colors, fonts, normalize } from 'config';
 
 const styles = StyleSheet.create({
@@ -53,6 +54,7 @@ const styles = StyleSheet.create({
 
 export class CommentInput extends Component {
   props: {
+    users: Array,
     userHasPushPermission: boolean,
     issueLocked: boolean,
     onSubmitEditing: Function,
@@ -66,6 +68,8 @@ export class CommentInput extends Component {
   constructor() {
     super();
 
+    console.log('in constructor commentinput');
+
     this.state = {
       text: '',
       height: 0,
@@ -78,7 +82,7 @@ export class CommentInput extends Component {
   };
 
   render() {
-    const { userHasPushPermission, issueLocked } = this.props;
+    const { userHasPushPermission, issueLocked, users } = this.props;
 
     let userCanPost = null;
 
@@ -88,33 +92,43 @@ export class CommentInput extends Component {
       userCanPost = true;
     }
 
+    console.log('in render commentinput');
+
     return (
       <View style={styles.container}>
         <View style={styles.wrapper}>
           <Icon name="send" color={colors.grey} />
 
-          {userCanPost &&
-            <TextInput
-              underlineColorAndroid={'transparent'}
-              placeholder={
-                issueLocked && userHasPushPermission
-                  ? 'Locked, but you can still comment...'
-                  : 'Add a comment...'
-              }
-              multiline
-              blurOnSubmit
-              onChangeText={text => this.setState({ text })}
-              onContentSizeChange={event =>
-                this.setState({ height: event.nativeEvent.contentSize.height })}
-              onSubmitEditing={event =>
-                this.handleSubmit(event.nativeEvent.text)}
-              placeholderTextColor={colors.grey}
-              style={[
-                styles.textInput,
-                { height: Math.max(30, this.state.height) },
-              ]}
-              value={this.state.text}
-            />}
+          {/* {userCanPost &&
+            <View>
+              <MentionArea
+                trigger="@"
+                text={this.state.text}
+                height={0}
+                users={users}
+              />
+              <TextInput
+                underlineColorAndroid={'transparent'}
+                placeholder={
+                  issueLocked && userHasPushPermission
+                    ? 'Locked, but you can still comment...'
+                    : 'Add a comment...'
+                }
+                multiline
+                blurOnSubmit
+                onChangeText={text => this.setState({ text })}
+                onContentSizeChange={event =>
+                  this.setState({ height: event.nativeEvent.contentSize.height })}
+                onSubmitEditing={event =>
+                  this.handleSubmit(event.nativeEvent.text)}
+                placeholderTextColor={colors.grey}
+                style={[
+                  styles.textInput,
+                  { height: Math.max(30, this.state.height) },
+                ]}
+                value={this.state.text}
+              />
+            </View>} */}
 
           {!userCanPost &&
             <Text style={[styles.textInput, { color: colors.grey }]}>
