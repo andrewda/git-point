@@ -2,7 +2,7 @@
   "projectName": "git-point",
   "projectOwner": "gitpoint",
   "files": [
-    "README.md"
+    "CONTRIBUTORS.md"
   ],
   "imageSize": 100,
   "contributorsPerLine": 6,
