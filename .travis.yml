@@ -12,4 +12,7 @@ install:
   - export PATH="$PATH:node_modules/.bin"
   - which eslint
 script:
-  - coala --ci -V && yarn run eslint && yarn run stylelint && yarn run test:coverage
+  - coala --ci -V
+  - yarn run eslint
+  - yarn run stylelint
+  - yarn run test:coverage
